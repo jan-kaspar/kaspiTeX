@@ -1,0 +1,341 @@
+\input colors
+\input fonts
+
+%----- utility commands -----------------------------------------------------------------------------
+
+\let\ea=\expandafter
+
+\def\makecom#1#2{%
+	\global\ea\edef\csname #1\endcsname{#2}%
+}
+
+\def\makecomNonEx#1#2{%
+	\global\ea\def\csname #1\endcsname{#2}%
+}
+
+\def\makencom#1#2#3{%
+	\global\ea\edef\csname #1\the#2\endcsname{#3}%
+}
+
+\def\com#1{%
+	\csname #1\endcsname
+}
+
+\def\ncom#1#2{%
+	\csname #1\the#2\endcsname
+}
+
+\def\safecom#1{%
+	\ea\ifx\csname #1\endcsname\relax
+		\message{! safecom:#1 not defined} ?#1?
+	\else
+		\csname #1\endcsname
+	\fi
+}
+
+\def\IfNch#1#2#3{%
+	\let\Nchar#1%
+	\def\NchTempOne{#2}%
+	\def\NchTempTwo{#3}%
+	\futurelet\nextchar\NchDecide
+}
+
+\def\NchDecide{%
+	\ifx\Nchar\nextchar
+		\let\next=\NchTempOne
+	\else
+		\let\next=\NchTempTwo
+	\fi
+	\next
+}
+
+%----- comma-separated list processing --------------------------------------------------------------
+
+% usage:	\ForAllComSepImp{list}{\command}{text1}{text2}{sep1}{sep2}
+% output:
+%   TEXT\command{first item}sep1 ... sep1\command{prelast item}sep2\command{last item}
+% where TEXT = text1 it there's just one item in the list or TEXT = text2 otherwise.
+
+\def\CSIbufTOvv#1,#2;{%
+	\def\CSIvv{#1}%
+	\def\CSIbuf{#2}%
+}
+
+\def\ForAllComSepImp#1#2#3#4#5#6{%
+	\def\CSIbuf{#1}%
+	\def\CSIaction{#2}%
+	\def\CSItit{#3}%
+	\def\CSItitp{#4}%
+	\def\CSIcomma{#5}%
+	\def\CSIand{#6}%
+	\ifx\CSIbuf\empty
+	\else
+		\edef\CSIbuf{\CSIbuf,}%
+		\ea\CSIbufTOvv\CSIbuf;%
+		\ifx\CSIbuf\empty
+			\CSItit\CSIaction{\CSIvv}%
+		\else
+			\edef\CSIv{\CSIvv}%
+			\ea\CSIbufTOvv\CSIbuf;%
+			\CSItitp
+			\ForAllComSepImpLoop
+		\fi
+	\fi
+}
+
+\def\ForAllComSepImpLoop{%
+	\ifx\CSIbuf\empty  
+		\let\next\relax  
+		\CSIaction{\CSIv}\CSIand\CSIaction{\CSIvv}%
+	\else  
+		\let\next\ForAllComSepImpLoop
+		\CSIaction{\CSIv}\CSIcomma%
+		\edef\CSIv{\CSIvv}%
+		\ea\CSIbufTOvv\CSIbuf;%
+	\fi
+	\next
+}
+
+%----- itemization ----------------------------------------------------------------------------------
+
+\def\bitm{%
+	\begingroup
+    \countdef\itc=100 \itc = 0
+    \countdef\itcc=101
+    \dimendef\itpar=1 \itpar = 5mm
+    \dimendef\itskip=2 \itskip = 2mm
+}
+
+\def\eitm{\par\endgroup}
+\def\itmpar{\par\parindent=\itpar\indent\hang}
+\def\itmmpar{\par\parindent=2\itpar\indent\hang}
+\def\itm{\par\penalty-5000\vskip\itskip\nobreak\advance\itc by1\itcc=96
+         \parindent=\itpar\indent\hang
+         \llap{\hbox to\itpar{\the\itc)\hss}}}
+\def\itmm{\par\penalty-5000\advance\itcc by1
+          \parindent=2\itpar\indent\hang
+          \llap{\hbox to\itpar{\char\itcc) \hss}}}
+
+%----- bullets --------------------------------------------------------------------------------------
+
+\catcode`\>=11
+
+\newskip\itskip \itskip2mm
+\newskip\iitskip \iitskip0mm
+\newskip\iiitskip \iiitskip0mm
+
+\newdimen\itindent \itindent4mm
+\newdimen\iitindent \iitindent8mm
+\newdimen\iiitindent \iiitindent12mm
+
+\def\previcol{}
+
+\def\itcol{}
+\def\>{%
+	\par\vskip\itskip
+	\parindent\itindent\indent\hang
+	\itcol
+	\def\previcol{\itcol}%
+	\llap{\hbox to\itindent{$\bullet$\hss}}%
+}
+
+\def\>E{\par\vskip\itskip\parindent\itindent\indent\hang}
+
+\def\iitcol{}
+\def\>>{%
+	\par\vskip\iitskip
+	\parindent\iitindent\indent\hang
+	\iitcol
+	\def\previcol{\iitcol}%
+	{%
+		\advance\iitindent-\itindent
+		\llap{\hbox to\iitindent{$\circ$\hss}}%
+	}%
+}
+
+\def\iiitcol{}
+\def\>>>{%
+	\par\vskip\iiitskip
+	\parindent\iiitindent\indent\hang
+	\iiitcol
+	\def\previcol{\iiitcol}%
+	{%
+		\advance\iiitindent-\iitindent
+		\llap{\hbox to\iiitindent{--\hss}}%
+	}%
+}
+
+
+%----- tables ---------------------------------------------------------------------------------------
+
+\def\bhrule{\hrule height1pt}
+\def\bvrule{\vrule width1pt}
+\def\bhrulefill{\leaders\bhrule\hfill}
+\def\ln{\noalign{\hrule}}
+\def\bln{\noalign{\bhrule}}
+
+% line over some cells only: eg: \omit&\multispan{15}\hrulefill\cr
+
+\def\tskip{\hskip2mm}
+
+%----- graphics -------------------------------------------------------------------------------------
+
+\def\GetCommaSep#1,#2;{%
+	\def\FirstPar{#1}%
+	\def\OtherPar{#2}%
+}
+
+\def\SetEPSsize#1{%
+	\GetCommaSep#1,;%
+	\ifx \FirstPar\empty
+	\else
+		\ea\epsfxsize=\FirstPar
+	\fi
+	\ifx \OtherPar\empty
+	\else 
+		\ea\GetCommaSep\OtherPar;%
+		\ea\epsfysize=\FirstPar
+	\fi
+}
+
+\def\SetPDFsize#1{%
+	\def\pdfxsize{}%
+	\def\pdfysize{}%
+	\GetCommaSep#1,;%
+	\ifx\FirstPar\empty
+	\else
+		\edef\pdfxsize{width\FirstPar}%
+	\fi
+	\ifx\OtherPar\empty
+	\else 
+		\ea\GetCommaSep\OtherPar;%
+		\edef\pdfysize{height\FirstPar}%
+	\fi
+}
+
+\ifx\pdfoutput\undefined
+	\def\IncludeGraphics#1{\epsfbox{#1}}%
+	\def\IncludeSizedGraphics#1#2{\SetEPSsize{#1}\epsfbox{#2}}%
+\else
+	\def\IncludeGraphics#1{\pdfximage {#1}\pdfrefximage\pdflastximage}%
+	\def\IncludeSizedGraphics#1#2{\SetPDFsize{#1}\pdfximage\pdfxsize\pdfysize{#2}\pdfrefximage\pdflastximage}%
+\fi
+
+%----- mathematics ----------------------------------------------------------------------------------
+
+\font\MathCalFont = rsfs10
+
+\def\rhs{r.h.s.\spacefactor=1000}
+\def\lhs{l.h.s.\spacefactor=1000}
+
+\def\d{{\fam0 d}}	%\def\d{\hbox{\mathrmfont d}}
+\def\arctg{\mathop{\rm arctg}\nolimits}
+\def\atan{\mathop{\rm atan}\nolimits}
+\def\tg{\mathop{\rm tg}\nolimits}
+\def\log{\mathop{\rm ln}\nolimits}
+\def\rank{\mathop{\rm rank}\nolimits}
+\def\Tr{\mathop{\rm Tr}\nolimits}
+\def\Var{\mathop{\rm Var}\nolimits}
+\def\op#1{\hat{#1}}
+\def\ket#1{\left|#1\right\rangle}
+\def\bra#1{\left\langle#1\right|}
+\def\brk#1#2{\langle #1 | #2 \rangle}
+\def\mel#1#2#3{\langle #1 | #2 | #3 \rangle}
+\def\em#1{{\it #1}}
+\def\vec#1{\mathbf{#1}}
+\def\mat#1{\mathsf{#1}}
+\def\T{{\sf T}}
+\def\mean#1{\langle#1\rangle}
+\def\iz#1{$^{#1}$}
+\def\O#1{{\cal O}(#1)}
+\def\diag{\mathop{\rm diag}\nolimits}
+\def\Exp#1{\left\langle#1\right\rangle}
+\def\e{{\rm e}}
+\def\i{{\rm i}}
+\def\ra{$\rightarrow$}
+\def\Ra{$\Rightarrow$}
+\def\thx{$\th^*_x$}
+\def\thy{$\th^*_y$}
+\def\dsdt{$\d\si/\d t$}
+
+\def\matrix#1{
+	\null\,\vcenter{
+		\nointerlineskip
+		%\def\strut{\vrule width0pt depth6pt height14pt}
+		\ialign{\strut\hfil$##$\hfil&&\quad\strut\hfil$##$\hfil\crcr
+			\mathstrut\crcr\noalign{\kern-\baselineskip}
+			#1\crcr
+			\mathstrut\crcr\noalign{\kern-\baselineskip}
+		}
+	}\,
+}
+
+\def\eqnarray#1{%
+	\null\,
+	\vcenter{
+		\openup1\jot
+		\ialign{%
+			\strut\hfil$\displaystyle{##}$&${\displaystyle{{}##}}$\hfil&&${\displaystyle{{}##}}$\crcr
+			#1\crcr
+		}%
+	}%
+}
+
+\def\un#1{\ {\rm #1}}
+\def\ung#1{\quad{\rm(#1)}}
+\def\unp#1{\ ({\rm #1})}%
+\def\unt#1{({\rm #1})}%
+
+\def\udots{%
+	\mathinner{%
+		\mkern1mu
+		\raise1pt\hbox{.}%
+		\mkern2mu
+		\raise4pt\hbox{.}%
+		\mkern2mu
+		\raise7pt\hbox{.}
+		\mkern1mu
+	}
+}
+
+%----- finesses -------------------------------------------------------------------------------------
+
+\def\.{\ \hbox{.}}
+\def\c{\ ,}
+
+\def\uline#1{\vtop{\hbox{#1}\vskip.5mm\vskip-\prevdepth\hrule\vskip1.5mm}}
+\def\mk#1{{\bf #1}}
+
+\def\rem{!!!\vadjust{\hbox{\hskip\hsize\vbox to0pt{\vss\hbox{\hskip5mm !!!}\vskip3pt}}}}
+
+\def\percent{\%}
+
+\def\_{\leavevmode \kern.06em \vbox{\hrule width.3em}}
+{\catcode`\_=\active \global\let_=\_}
+
+\ifx\pdfoutput\undefined
+	\def\link#1#2{#2}%
+\else
+	\def\link#1#2{%
+		\pdfstartlink%
+			attr{/Border [0 0 0]}%
+			user{/Subtype/Link/A<</Type/Action/S/URI/URI(#1)>>}%
+			%\pdfliteral{1 1 0 0 k} #2 \pdfliteral{0 0 0 1 k}%
+			#2%
+		\pdfendlink%
+	}%
+\fi
+
+\def\ulink#1#2{\uline{\link{#1}{#2}}}
+
+\def\bls{\vskip\baselineskip}
+
+\def\todo#1{{\cRed TODO: #1}}
+\def\TODO#1{\todo{#1}}
+\def\Todo#1{\todo{#1}}
+
+\def\\{\hfil\break}
+
+%----- defaults -------------------------------------------------------------------------------------
+
+\SetFontSizesX

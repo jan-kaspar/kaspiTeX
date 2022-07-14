@@ -1,0 +1,334 @@
+% #1 = roman font, #2 = bold font, #3 = italic font
+\def\SelectTextFontSet#1#2#3{%
+	\xdef\TextRFontName{#1}%
+	\xdef\TextBFontName{#2}%
+	\xdef\TextIFontName{#3}%
+}
+
+% first group of math fonts
+\def\SelectMathFontSetI#1#2#3#4#5#6#7{%
+	\xdef\MathOFontName{#1}%
+	\xdef\MathIFontName{#2}%
+	\xdef\MathIIFontName{#3}%
+	\xdef\MathIIIFontName{#4}%
+	\xdef\MathVIFontName{#5}%
+	\xdef\MathVIIIFontName{#6}%
+	\xdef\MathIXFontName{#7}%
+}
+
+% second group of math fonts
+\def\SelectMathFontSetII#1#2#3{%
+	\xdef\MathXFontName{#1}%
+	\xdef\MathXIFontName{#2}%
+	\xdef\MathXVFontName{#3}%
+}
+
+\def\SetTextFonts#1{%
+	\edef\RmFont{\expandafter\csname \TextRFontName_#1\endcsname}%
+	\edef\BfFont{\expandafter\csname \TextBFontName_#1\endcsname}%
+	\edef\ItFont{\expandafter\csname \TextIFontName_#1\endcsname}%
+}
+
+\def\SetFontFam#1#2#3#4#5{% e.g. 1, cmmi, 12, 10, 7
+	\textfont#1=\csname#2_#3\endcsname
+	\scriptfont#1=\csname#2_#4\endcsname
+	\scriptscriptfont#1=\csname#2_#5\endcsname
+}
+
+\def\LoadTextFonts#1{%
+	\LoadOneFontSet{\TextRFontName}{#1,}%
+	\LoadOneFontSet{\TextBFontName}{#1,}%
+	\LoadOneFontSet{\TextIFontName}{#1,}%
+}
+
+\def\GetFirstToken#1,#2;{%
+	\def\token{#1}%
+	\def\buf{#2}%
+}
+
+\def\LoadOneFontSet#1#2{%
+	\edef\buf{#2}%
+	\ifx\buf\empty
+	\else
+		\expandafter\GetFirstToken\buf;%
+		\LoadOneFont{#1}{\token}%
+		\LoadOneFontSet{#1}{\buf}%
+	\fi
+}
+
+\def\LoadOneFont#1#2{%
+	\expandafter\font\csname#1_#2\endcsname=#1 at #2pt
+}
+
+\def\LoadMathFonts#1{%
+	\LoadOneFontSet{\MathOFontName}{#1,}
+	\LoadOneFontSet{\MathIFontName}{#1,}
+	\LoadOneFontSet{\MathIIFontName}{#1,}
+	\LoadOneFontSet{\MathIIIFontName}{#1,}
+	\LoadOneFontSet{\MathVIFontName}{#1,}
+	\LoadOneFontSet{\MathVIIIFontName}{#1,}
+	\LoadOneFontSet{\MathIXFontName}{#1,}
+	\LoadOneFontSet{\MathXFontName}{#1,}
+	\LoadOneFontSet{\MathXIFontName}{#1,}
+	\LoadOneFontSet{\MathXVFontName}{#1,}
+}
+
+% #1 = normal size, #2 = reduced size, #3 = twice reduced
+% #4 = baselineskip
+% #5 and #6 normal strut height and depth
+% #7 and #8 big strut height and depth
+\def\SetFontSizesTemplate#1#2#3#4#5#6#7#8{%
+	% text fonts
+	\SetTextFonts{#1}%
+	\rm
+	% mathematic fonts
+	\SetFontFam{0}{\MathOFontName}{#1}{#2}{#3}%			roman font (text)
+	\SetFontFam{1}{\MathIFontName}{#1}{#2}{#3}%			math italics
+	\SetFontFam{2}{\MathIIFontName}{#1}{#2}{#3}%		math symbols and calligraphic font
+	\SetFontFam{3}{\MathIIIFontName}{#1}{#2}{#3}%		scalable operators (brackets, integrals, etc.)
+	% 4													text italics													
+	% 5													text slanted
+	\SetFontFam{6}{\MathVIFontName}{#1}{#2}{#3}%		bold (text)
+	% 7													typewriter
+	\SetFontFam{8}{\MathVIIIFontName}{#1}{#2}{#3}%		bold math italics
+	\SetFontFam{9}{\MathIXFontName}{#1}{#2}{#3}%		slanted sans serif
+	\SetFontFam{10}{\MathXFontName}{#1}{#2}{#3}%		roman sans serif
+	\SetFontFam{11}{\MathXIFontName}{#1}{#2}{#3}%		extra (AMS) symbols
+	\SetFontFam{15}{\MathXVFontName}{#1}{#2}{#3}%		black board
+	%
+	\baselineskip=#4pt
+	\setbox\strutbox=\hbox{\vrule height#5pt depth#6pt width0pt}%
+	\def\bstrut{\vrule height#7pt depth#8pt width0pt}%
+}
+
+\def\SetFontSizesXX{%
+	\SetFontSizesTemplate{20}{16}{12}{24}{17}{7}{22}{6}%
+}
+
+\def\SetFontSizesXVIII{%
+	\SetFontSizesTemplate{18}{15}{10.5}{22.5}{15}{7.5}{19.5}{7.5}%
+}
+
+\def\SetFontSizesXVI{%
+	\SetFontSizesTemplate{16}{13.3}{9.3}{20}{13.3}{6.7}{17.3}{6.7}%
+}
+
+\def\SetFontSizesXIV{%
+	\SetFontSizesTemplate{14}{11.7}{8.2}{17.5}{11.7}{5.8}{15.2}{5.8}%
+}
+
+\def\SetFontSizesXII{%
+	\SetFontSizesTemplate{12}{10}{7}{15}{10}{5}{13}{5}%
+}
+
+\def\SetFontSizesXI{%
+	\SetFontSizesTemplate{11}{8.8}{6.6}{13.2}{9.4}{3.9}{12.1}{3.3}%
+}
+
+\def\SetFontSizesX{%
+	\SetFontSizesTemplate{10}{8}{6}{12}{8.5}{3.5}{11}{3}%
+}
+
+\def\SetFontSizesIX{%
+	\SetFontSizesTemplate{9}{7.5}{5.3}{11.3}{7.5}{3.9}{9.8}{3.9}%
+}
+
+\def\SetFontSizesVIII{%
+	\SetFontSizesTemplate{8}{7}{5}{10}{7}{3}{10}{2}%
+}
+
+\def\SetFontSizesVII{%
+	\SetFontSizesTemplate{7}{5.8}{4.1}{8.8}{5.8}{2.9}{7.6}{2.9}%
+}
+
+\def\SetFontSizesVI{%
+	\SetFontSizesTemplate{6}{5}{3.5}{7.5}{5}{2.5}{6.5}{2.5}%
+}
+
+%----------------------------------------------------------------------------------------------------
+
+\def\rm{\fam0\RmFont}
+\def\bf{\fam6\BfFont}
+\def\it{\fam4\ItFont}
+\def\sf{\fam9}
+
+%----- greek letters --------------------------------------------------------------------------------
+% links \al, \be ...  with corresponding characters in font nubmer #1. 1 for math italics, 8 for bold italics
+% to add more, look to appendix F of TeXbook (page 430)
+\def\SetGreek#1{%
+	\mathchardef\al="0#10B
+	\mathchardef\be="0#10C
+	\mathchardef\ga="0#10D
+	\mathchardef\de="0#10E
+	\mathchardef\ep="0#122
+	\mathchardef\ze="0#110
+	\mathchardef\et="0#111
+	\mathchardef\th="0#123
+	\mathchardef\io="0#113
+	\mathchardef\ka="0#114
+	\mathchardef\la="0#115
+	\mathchardef\mu="0#116
+	\mathchardef\nu="0#117
+	\mathchardef\xi="0#118
+	\mathchardef\pi="0#119
+	\mathchardef\rh="0#125
+	\mathchardef\si="0#11B
+	\mathchardef\ta="0#11C
+	\mathchardef\up="0#11D
+	\mathchardef\ph="0#127
+	\mathchardef\ch="0#11F
+	\mathchardef\ps="0#120
+	\mathchardef\om="0#121
+	%
+	\mathchardef\Ga="0#100
+	\mathchardef\De="0#101
+	\mathchardef\Th="0#102
+	\mathchardef\La="0#103
+	\mathchardef\Xi="0#104
+	\mathchardef\Pi="0#105
+	\mathchardef\Si="0#106
+	\mathchardef\Up="0#107
+	\mathchardef\Ph="0#108
+	\mathchardef\Ps="0#109
+	\mathchardef\Om="0#10A
+}
+
+\SetGreek{1}
+\def\mathbf#1{{\SetGreek{8}\bf #1}}
+\def\mathsf#1{{\SetGreek{9}\sf #1}}
+\def\mathbb#1{{\fam15#1}}
+
+\def\SetGreekLGR#1{%
+	\mathchardef\al="0#161
+	\mathchardef\be="0#162
+	\mathchardef\ga="0#167
+	\mathchardef\de="0#164
+	\mathchardef\ep="0#165
+	\mathchardef\ze="0#17A
+	\mathchardef\et="0#168
+	\mathchardef\th="0#16A
+	\mathchardef\io="0#169
+	\mathchardef\ka="0#16B
+	\mathchardef\la="0#16C
+	\mathchardef\mu="0#16D
+	\mathchardef\nu="0#16E
+	\mathchardef\xi="0#178
+	\mathchardef\pi="0#170
+	\mathchardef\rh="0#172
+	\mathchardef\si="0#173
+	\mathchardef\ta="0#174
+	\mathchardef\up="0#175
+	\mathchardef\ph="0#166
+	\mathchardef\ch="0#171
+	\mathchardef\ps="0#179
+	\mathchardef\om="0#177
+	%
+	\mathchardef\Ga="0#147
+	\mathchardef\De="0#144
+	\mathchardef\Th="0#14A
+	\mathchardef\La="0#14C
+	\mathchardef\Xi="0#148
+	\mathchardef\Pi="0#150
+	\mathchardef\Si="0#153
+	\mathchardef\Up="0#155
+	\mathchardef\Ph="0#146
+	\mathchardef\Ps="0#159
+	\mathchardef\Om="0#157
+	%
+	\mathcode`\/="012F
+	\mathcode`\.="012E
+	\mathcode`\,="612C
+}
+
+%----- font sets ------------------------------------------------------------------------------------
+
+% Computer Modern fonts (EPL style)
+\def\SelectCMFonts{%
+	\SelectTextFontSet{cmr10}{cmbx10}{cmti10}%
+	\SelectMathFontSetI{csr10}{cmmi10}{cmsy10}{cmex10}{cmbx10}{cmmib10}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+% Palatino with Computer Modern in math
+\def\SelectPalatinoCMFonts{%
+	\SelectTextFontSet{cs-qplr}{cs-qplb}{cs-qplri}%
+	\SelectMathFontSetI{csr10}{cmmi10}{cmsy10}{cmex10}{cmbx10}{cmmib10}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+% Palatino with Pazo in math
+\def\SelectPalatinoPazoFonts{%
+	\SelectTextFontSet{cs-qplr}{cs-qplb}{cs-qplri}%
+	\SelectMathFontSetI{cs-qplr}{zplmr7m}{zplmr7y}{zplmr7v}{zplmb7t}{zplmb7m}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+% Times Roman ("TOTEM style")
+\def\SelectTimesCMFonts{
+	\SelectTextFontSet{ptmr8t}{ptmb8t}{ptmri8t}%
+
+	\SelectMathFontSetI{txb}{txbmi}{cmsy10}{cmex10}{cmbx10}{cmmib10}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+% URW Nimbus Roman
+\def\SelectNimbusCMFonts{
+	\SelectTextFontSet{ptmr8t}{ptmb8t}{ptmri8t}%
+
+	\SelectMathFontSetI{ptmr8t}{zptmcm7m}{txsy}{cmex10}{ptmb8t}{cmmib10}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+% DejaVuSansCondensed
+\def\SelectDejaVuSansCondensedFonts{
+	\SelectTextFontSet{DejaVuSansCondensed-tlf-t1}{DejaVuSansCondensed-Bold-tlf-t1}{DejaVuSansCondensed-Oblique-tlf-t1}%
+	%\SelectTextFontSet{cmss10}{cmssbx10}{cmssi10}%
+	
+	\SelectMathFontSetI{DejaVuSansCondensed-tlf-t1}{DejaVuSansCondensed-Oblique-tlf-t1}{cmsy10}{cmex10}{DejaVuSansCondensed-Bold-tlf-t1}{DejaVuSansCondensed-BoldOblique-tlf-t1}{DejaVuSansCondensed-Oblique-tlf-lgr}%
+	\SelectMathFontSetII{DejaVuSansCondensed-BoldOblique-tlf-lgr}{msam10}{fplmbb}%
+
+	\SetGreekLGR{9}
+}
+
+% TODO: CMSS fonts, 
+\def\SelectCMSSFonts{
+	\SelectTextFontSet{DejaVuSansCondensed-tlf-t1}{DejaVuSansCondensed-Bold-tlf-t1}{DejaVuSansCondensed-Oblique-tlf-t1}%
+	%\SelectTextFontSet{cmss10}{cmssbx10}{cmssi10}%
+	
+	\SelectMathFontSetI{cmss10}{cmssi10}{cmsy10}{cmex10}{cmssbx10}{cmmib10}{cmssi10}%
+	\SelectMathFontSetII{cmss10}{msam10}{fplmbb}%
+}
+
+% TODO: Helvetica + Euler
+\def\SelectHelveticaFonts{
+	\SelectTextFontSet{phvr8t}{phvb8t}{phvro8t}%
+
+	\SelectMathFontSetI{phvr8t}{eurm10}{cmbrsy10}{cmex10}{cmbrmb10}{cmbrmb10}{cmbrmi10}%
+	\SelectMathFontSetII{cmbr10}{msam10}{fplmbb}%
+}
+
+\def\LoadFonts{%
+	\LoadTextFonts{20,18,16,14,12,11,10,9,8,7,6}%
+	\LoadMathFonts{24,22.5,22,20,19.5,18,17.5,17.3,17,16,15,14,13.3,13.2,12.1,12,11.7,11.3,11,10.5,10,9.8,9.4,9.3,9,8.8,8.5,8.2,8,7.5,7,6.7,6.6,6.5,6,5.8,5.3,5,4.1,3.9,3.5,3.3,3,2.5,2}%
+}
+
+%----- non-standard math symbols --------------------------------------------------------------------
+
+\mathchardef\lesssimC="0B2E
+\mathchardef\gtrsimC="0B26
+\mathchardef\lessapproxC="0B2F
+\mathchardef\gtrapproxC="0B27
+
+\def\lesssim{\mathrel{\lesssimC}}
+\def\gtrsim{\mathrel{\gtrsimC}}
+\def\lessapprox{\mathrel{\lesssimC}}
+\def\gtrapprox{\mathrel{\gtrsimC}}
+
+\let\ls=\lesssim
+\let\gs=\gtrsim
+
+%----- presets --------------------------------------------------------------------------------------
+
+\SelectPalatinoPazoFonts
+%\SelectCMFonts
+\LoadFonts

@@ -1,0 +1,189 @@
+\input base
+
+%----- output files ---------------------------------------------------------------------------------
+
+\newwrite\REF
+
+\def\MakeRef#1#2{%
+	\makecom{#1}{#2}%
+	\immediate\write\REF{\string\makecom{#1}{#2}}%
+}
+
+
+
+%----- global commands ------------------------------------------------------------------------------
+
+\def\BeginText{%
+	\input\jobname.ref%
+	\immediate\openout\REF\jobname.ref%
+	\pageno=1%
+}
+
+\def\EndText{%
+	\immediate\closeout\REF
+}
+
+
+
+%----- background a boxes/frames --------------------------------------------------------------------
+
+\def\AddBckg{\IfNch[{\AddBackgroundWithMargin}{\AddBackground}}	
+
+\def\BackgroundColor{\cLLBlue}
+\def\AddBackground#1{%
+	\setbox150\hbox{#1}%
+	\vbox{\offinterlineskip
+		\BackgroundColor%
+		\hrule width\wd150 height\ht150 depth\dp150
+		\vskip-\ht150
+		\vskip-\dp150
+		\hbox{\box150}%
+		\cFg%
+		\kern\dp150
+	}%
+}
+
+\def\AddBackgroundWithMargin[#1]#2{%
+	\AddBackground{\vbox{\vskip#1\hbox{\hskip#1#2\hskip#1}\vskip#1}}
+}
+
+\def\AddBox{\IfNch[{\AddBoxWithMargin}{\AddBoxWithMargin[0mm]}}	
+
+\def\FrameColor{\cLBlue}
+\def\FrameWidth{1mm}
+\def\AddBoxWithMargin[#1]#2{%
+	\FrameColor
+	\vbox{%
+		\hrule height\FrameWidth
+		\hbox{%
+			\vrule width\FrameWidth
+			\cBlack
+			\vbox{%
+				\vskip#1%
+				\hbox{\hskip#1 #2\hskip#1}%
+				\vskip#1%
+			}%
+			\FrameColor
+			\vrule width\FrameWidth
+		}%
+		\hrule height\FrameWidth
+	}%
+	\cFg
+}
+
+%----- figures --------------------------------------------------------------------------------------
+
+\def\fig{\IfNch*{\figB}{\figNB}}
+
+\def\figB*{\IfNch[{\figBS}{\figBNS}}	
+\def\figNB{\IfNch[{\figNBS}{\figNBNS}}	
+
+\def\figBS[#1]#2{\AddBackground{\IncludeSizedGraphics{#1}{#2}}}
+\def\figBNS#1{\AddBackground{\IncludeGraphics{#1}}}
+\def\figNBS[#1]#2{\IncludeSizedGraphics{#1}{#2}}
+\def\figNBNS#1{\IncludeGraphics{#1}}
+
+
+%----- tables ---------------------------------------------------------------------------------------
+
+\def\maketemplate{\bstrut\bvrule\hfil\tskip $##$\tskip\hfil&&
+                  \vrule\hfil\tskip $##$\tskip\hfil\cr}
+\def\TabBase#1{%
+	\bgroup
+		\hbox{%
+			\vbox{\offinterlineskip\halign{\span\maketemplate #1}}%
+			\bvrule
+		}%
+	\egroup
+}
+
+\def\mhtemplate{\bstrut\bvrule\hfil\tskip $##$\tskip\hfil&    
+                \bstrut\bvrule\hfil\tskip $##$\tskip\hfil&&
+                \vrule\hfil\tskip $##$\tskip\hfil\cr}
+\def\HTabBase#1{%
+	\bgroup
+		\hbox{%
+			\vbox{\offinterlineskip\halign{\span\mhtemplate#1}}%
+			\bvrule
+		}%
+	\egroup
+}
+
+\def\tabB*#1{%
+	\AddBckg[1mm]{\cBlack\TabBase{#1}}%
+}
+
+\def\htabB*#1{%
+	\AddBckg[1mm]{\cBlack\HTabBase{#1}}%
+}
+
+\def\tab{\IfNch*{\tabB}{\TabBase}}
+\def\htab{\IfNch*{\htabB}{\HTabBase}}
+
+%----- references -----------------------------------------------------------------------------------
+
+\def\plab#1{%
+	\MakeRef{page:#1}{\the\pageno}%
+	\pdfdest name {page:#1} xyz
+}
+
+\def\pref#1{%
+	\pdfstartlink
+		attr{/Border [0 0 0]}%
+		goto name {page:#1}%
+		\uline{\safecom{page:#1}}%
+	\pdfendlink
+}
+
+%----- bibliography----------------------------------------------------------------------------------
+
+\newcount\bibn
+\bibn = 0
+\newcount\bookn
+
+\def\bref#1{[\abref{#1}]}
+
+\def\abref#1{%
+	\AddBibRef{#1}%
+	\pdfstartlink%
+		attr{/Border [0 0 0]}%
+		goto name {bibref:#1}%
+		$\underline{\rm\csname bibref:#1\endcsname}$%
+	\pdfendlink
+}
+
+\def\AddBibRef#1{%
+	\ea\ifx\csname bibref:#1\endcsname\relax%
+		\global\advance\bibn1%
+		\makecom{bibref:#1}{\the\bibn}%
+		\makecom{bibrefnum:\the\bibn}{#1}%
+	\fi
+}
+
+\def\AddRefInfo#1#2{\makecom{bib:#1}{#2}}
+
+\catcode`\>=12
+
+\def\PrintReferences{%
+	\bookn=0
+	\loop\ifnum\bibn>\bookn
+		\advance\bookn1
+		\MakeBibLine
+	\repeat
+}
+
+\catcode`\>=11
+
+\def\MakeBibLine{%
+	\edef\reference{\com{bibrefnum:\the\bookn}}%
+	\pdfdest name {bibref:\reference} xyz
+	\hbox to\hsize{%
+		\hbox to10mm{\strut[\the\bookn]\hfil}%
+		\vtop{%
+			\advance\hsize-1cm\noindent
+			%\bstrut
+			\com{bib:\reference}%
+			%\strut
+		}%
+	}%
+}

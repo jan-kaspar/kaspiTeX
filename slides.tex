@@ -1,0 +1,260 @@
+\input base_presentation 
+
+%----- fonts ----------------------------------------------------------------------------------------
+
+%\font\TitleFont = cs-qplb-sc at 12pt
+%\font\FrontTitleFont = cs-qplb-sc at 20pt
+%\font\ContextFont = cs-qplb-sc at 8pt
+
+%----- page layout ----------------------------------------------------------------------------------
+
+\newdimen\pagewidth
+\newdimen\pageheight
+\newdimen\horizontalmargin
+\newdimen\verticalmargin % just bottom
+
+\def\ApplyLayout{
+		\hsize=\pagewidth
+		\hoffset=\horizontalmargin
+		\advance\hsize by -2\hoffset
+		\advance\hoffset by -1in
+		\vsize=\pageheight
+		\voffset=0mm
+		\advance\vsize by -\verticalmargin
+		\advance\voffset by -1in
+
+		\ifx\pdfoutput\undefined
+			\special{papersize=\the\pagewidth,\the\pageheight}
+		\else
+			\pdfpagewidth=\pagewidth
+			\pdfpageheight=\pageheight
+		\fi
+
+		\topskip=0pt
+}
+
+\def\StandardLayout{
+	\pagewidth=160mm
+	\pageheight=120mm
+	\horizontalmargin=4mm
+	\verticalmargin=4mm
+
+	\ApplyLayout
+}
+
+\def\WideLayout{
+	\pagewidth=213.33mm
+	\pageheight=120mm
+	\horizontalmargin=4mm
+	\verticalmargin=4mm	
+
+	\ApplyLayout
+}
+
+\StandardLayout
+
+\def\makefootline{\vbox to0pt{\line{\the\footline}\vss}}
+
+\output={\plainoutput}
+\def\plainoutput{
+	\shipout\vbox{\offinterlineskip
+		\makeheadline
+ 		\pagebody
+		\makefootline
+	}%
+	\advancepageno
+}
+
+\def\FootLine{%
+	\vbox to 4mm{%
+		\hbox to\hsize{%
+			\hskip-\horizontalmargin
+			\vbox to0pt{\advance\hsize2\horizontalmargin
+				\cBlue
+				\hrule height4mm width\hsize
+				\vss
+			}%
+			\hss
+		}%
+		\vss
+		\cWhite
+		\line{\SetFontSizesVIII\author\hfil{\it \caption}\hfil \date\hfil\lower2pt\hbox{\SetFontSizesX\bf \the\pageno}}%
+		\vss
+	}%
+}
+
+%----- background -----------------------------------------------------------------------------------
+
+\def\HeadlinePrototype#1{%
+	\hbox to0pt{%
+		\hskip-1in
+		\hskip-\hoffset
+		\vbox to0pt{%
+			\vglue-1.0in
+			\vskip-\voffset
+			\vskip-\parskip
+			\offinterlineskip
+			\noindent
+			\ifx\pdfoutput\undefined
+				\epsfxsize=\pagewidth\epsfbox{#1}%
+			\else
+				\pdfrefximage\pdfBackgroundImage
+			\fi
+			\vss
+		}%
+		\hss
+	}%
+}
+
+\def\SetBackground#1{%
+	\ifx\pdfoutput\undefined
+	\else
+		\pdfximage width\pagewidth{#1}%
+		\xdef\pdfBackgroundImage{\the\pdflastximage}%
+	\fi
+	\gdef\makeheadline{\HeadlinePrototype{#1}}%
+}
+
+
+\def\pagebody{\vbox to\vsize{\unvbox255}}
+
+%----- structure macros -----------------------------------------------------------------------------
+
+\def\title#1{%
+	\hbox to\hsize{%
+		\hskip-\horizontalmargin
+		\vbox{\advance\hsize2\horizontalmargin
+			\cBlue
+			\hrule height8mm width\hsize
+			\vbox to0pt{%
+				\vss
+				\vbox to8mm{%
+					\vss
+					\cWhite
+					\centerline{#1}%
+					\vss
+				}%
+			}%
+			\cLBlue
+			\hrule height0.5mm width\hsize
+			\cFg
+		}%
+	\hss
+	}%
+}
+
+\def\ctitle#1#2{\title{{\rm #1} : {\it #2}}}
+
+\def\Title#1{%
+	\hbox to\hsize{%
+		%\hskip-\horizontalmargin
+		\vbox{%
+			\cBlue
+			\hrule height13mm width\hsize
+			\vbox to0pt{%
+				\vss
+				\vbox to13mm{%
+					\vss
+					\cWhite
+					\vbox{\leftskip10pt plus1fil\rightskip10pt plus1fil\parfillskip0pt #1}%
+					\vss
+				}%
+			}%
+			\cFg
+		}%
+	\hss
+	}%
+}
+
+\def\section#1{\noindent\cRe{\bf #1}\cFg}
+
+\def\newpage{\vfil\eject%
+	%\cFg%
+	\NormalSettings%
+}
+
+%----- verbatim environment -------------------------------------------------------------------------
+
+\iffalse
+\chardef\other=12
+\def\SetVerbatim{\begingroup \catcode`\\=\other \catcode`\{=\other
+\catcode`\}=\other \catcode`\$=\other \catcode`\&=\other
+\catcode`\#=\other \catcode`\%=\other \catcode`\~=\other
+\catcode`\_=\other \catcode`\^=\other
+\obeyspaces \obeylines}
+{\obeyspaces\gdef {\ }} % \obeyspaces now gives \ , not \space
+
+\outer\def\bverb{$$\let\par=\endgraf \SetVerbatim \parskip=0pt
+\catcode`\|=0 \rightskip=-5pc \VerbatimFinish}
+
+{\catcode`\|=0 |catcode`|\=\other % | is temporary escape character
+|obeylines % end of line is active
+|gdef|VerbatimFinish#1^^M#2\everb{#1|vbox{#2}|endgroup$$}}
+\catcode`\|=\active
+{\obeylines\gdef|{\SetVerbatim\spaceskip=\ttglue\let^^M=\ \let|=\endgroup}}
+
+\fi
+
+%----- standards ------------------------------------------------------------------------------------
+
+% these settings are restored at the beginning of each slide
+\def\NormalSettings{%
+	\baselineskip=12pt%
+	\parindent=0pt%
+	\abovedisplayskip=0pt%
+	\abovedisplayshortskip=0pt%
+	\belowdisplayskip=0pt%
+	\belowdisplayshortskip=0pt%
+
+	\footline={\FootLine}%
+
+	\parskip=0pt%\baselineskip
+	\itskip2mm
+
+	\NormalFonts
+	\cFg
+}
+
+\def\EmptyBackground{%
+	\edef\cFg{\cBlack}%
+	\edef\cBg{\cWhite}%
+	\edef\cFig{\cWhite}
+	\edef\cTit{\cBlack}%
+	\def\makeheadline{}%
+	\cFg
+}
+
+\def\StdBackground{%
+	\edef\cFg{\cWhite}%
+	\edef\cBg{\cBlack}%
+	\edef\cFig{\cWhite}
+	\edef\cTit{\cYellow}%
+	\SetBackground{fig/bg5.jpg}%
+	\cFg
+}
+
+%----- details --------------------------------------------------------------------------------------
+
+\def\centerline#1{\hbox to\hsize{\hss#1\hss}}
+
+
+%----- presets --------------------------------------------------------------------------------------
+
+\SelectDejaVuSansCondensedFonts
+\LoadFonts
+
+\let\BiggerFonts\SetFontSizesXIV
+\let\NormalFonts\SetFontSizesXII
+\let\SmallerFonts\SetFontSizesX
+
+\EmptyBackground
+\NormalSettings
+\NormalFonts
+
+\def\itcol{\cBl}
+\def\iitcol{\cBlack}
+\def\iiitcol{\cDGrayRed}
+
+\def\em#1{\cGreen{\it #1}\previcol}
+\def\Em#1{\cRed{#1}\previcol}
+\def\EM#1{\cRed{\bf #1}\previcol}

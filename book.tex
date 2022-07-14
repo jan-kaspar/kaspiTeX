@@ -1,0 +1,449 @@
+\input base_text
+
+% ============================================ page layout ===============================================
+
+\def\FootText{}
+
+\newif\ifNewChapter
+
+\def\layoutpage{%
+	\footline={%
+		\tenbf
+		\ifodd\pageno
+			\FootText\hss\the\pageno
+		\else
+			\the\pageno\hss\FootText
+		\fi
+	}%
+	\def\makeheadline{%
+		\vbox to0pt{%
+			\vskip-25.5pt\line{%
+				\vbox to8.5pt{}%
+				\tenit
+				\ifodd\pageno
+					\hss\botmark
+				\else
+					\ifNewChapter
+					\else
+						\currentChapterName\hss
+					\fi
+				\fi
+			}%
+			\vskip3pt
+			\vskip-\prevdepth
+			\ifNewChapter
+				\global\NewChapterfalse
+			\else
+				\hrule
+			\fi
+			\vss
+		}%
+		\nointerlineskip
+	}%
+}
+
+\def\plainpage{\footline={}\def\makeheadline{}}
+
+
+% ============================================ fonts =====================================================
+\font\fPbxxv	= pplb8z at 25pt
+\font\fPbxx	 	= pplb8z at 20pt
+\font\fPbxvii 	= pplb8z at 17pt
+\font\fPbxiv 	= pplb8z at 14pt
+
+\font\fChapterWord	= rm-qzcmi at 50pt
+\font\fchapter 		= pplb8z at 25pt
+\font\fsection	 	= pplb8z at 14.4pt
+\font\fsubsection 	= pplb8z at 12pt
+\font\fssubsection	= pplb8z at 10pt
+
+\def\blschapter{30pt}
+\def\blssection{24pt}
+\def\blssubsection{19pt}
+\def\blsssubsection{17pt}
+
+
+% ========================================== structure macros ============================================
+\def\titskip{}
+
+% trick from "TeXBook naruby" page 57
+\def\TOCwrite#1#2#3#4#5{%
+	\edef\awrite{%
+		\write\TOC{%
+			\string#1{#2}{#3}{#4}{\noexpand #5}%
+		}%
+	}%
+	\awrite
+}
+
+\def\addPart#1{%
+	\csname n#1\endcsname=0
+	\expandafter\def\csname#1\endcsname{%
+		\IfNch[{\csname#1Ref\endcsname}{\csname#1Base\endcsname{}}%
+	}%
+	\expandafter\def\csname#1Ref\endcsname[##1]##2{%
+		\csname#1Base\endcsname{##1}{##2}%
+		\MakeRef{s:##1}{\currentPartNumber}%
+		\MakeRef{st:##1}{#1}%
+		%
+		\ifx\pdfoutput\undefined
+		\else
+			\pdfdest name {s:##1} xyz
+		\fi
+	}%
+}
+
+\newcount\nchapter
+\newcount\nsection
+\newcount\nsubsection
+\newcount\nssubsection
+
+\addPart{chapter}
+\addPart{section}
+\addPart{subsection}
+\addPart{ssubsection}
+
+\def\OutlineLabel{}
+\def\TOCLabel{}
+
+\def\partBase#1#2#3#4{%
+	\expandafter\def\csname #1Base\endcsname##1##2{%
+		#2
+		\expandafter\advance\csname n#1\endcsname1
+		\edef\currentPartNumber{#3}
+		\edef\currentPartName{\currentPartNumber\ ##2}%
+		%
+		\pdfdest name {sn:\currentPartNumber} xyz
+		\ifx\OutlineLabel\empty
+			\def\Label{\currentPartName}%
+		\else
+			\edef\Label{\currentPartNumber\ \OutlineLabel}%
+			\xdef\OutlineLabel{}%
+		\fi
+		\pdfoutline goto name {sn:\currentPartNumber} count \GetOutlineCount{\currentPartNumber} {\Label}%
+		%
+		\ifx\TOCLabel\empty
+			\def\Label{##2}%
+		\else
+			\edef\Label{\TOCLabel}%
+			\xdef\TOCLabel{}%
+		\fi
+		\TOCwrite{\TOCline}{#4}{\currentPartNumber}{\Label}{\the\pageno}%
+		%
+		\parindent0pt
+		\everypar={\parindent=\ParIndent\everypar={}}%
+		\penalty-\clubpenalty
+		\vskip1\baselineskip
+		\bgroup
+			\expandafter\baselineskip\csname bls#1\endcsname
+			\hbox{%
+				\vbox{%
+					\rightskip0pt plus1fill
+					\titskip
+					\bgroup
+						\csname f#1\endcsname
+						\currentPartName
+					\egroup
+				}%
+				\ifShowLabels
+					\rlap{\labelColor##1\cBlack}%
+				\fi
+			}%
+		\egroup
+		\mark{\currentPartNumber\ \Label}%
+		\penalty\clubpenalty
+		\vskip0.5\baselineskip
+	}%
+}
+
+\partBase{section}{\nsubsection=0\nssubsection=0}{\currentChapterNumber.\the\nsection}{1}
+\partBase{subsection}{\nssubsection=0}{\the\nchapter.\the\nsection.\the\nsubsection}{2}
+\partBase{ssubsection}{}{\the\nchapter.\the\nsection.\the\nsubsection.\the\nssubsection}{3}
+
+\def\alphabet{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,X,Y,Z}
+
+\def\GetNextLetter#1,#2;{%
+	\edef\letter{#1}%
+	\edef\alphabet{#2}
+}
+
+\def\chapterBase#1#2{%
+	\advance\nchapter1
+	\nsection=0
+	\nsubsection=0
+	\nssubsection=0
+	\eqn=0
+	\tabn=0
+	\fign=0
+	%
+	\vfil\eject\forceoddpage%
+	\ifnum\nchapter<65
+		\edef\currentChapterNumber{\the\nchapter}%
+		\edef\currentChapterName{Chapter \currentChapterNumber\ #2}%
+	\else
+		\expandafter\GetNextLetter\alphabet;
+		\edef\currentChapterNumber{\letter}%
+		\edef\currentChapterName{Appendix \currentChapterNumber\ #2}%
+	\fi
+	\edef\currentPartNumber{\currentChapterNumber}%
+	\edef\currentPartName{\currentChapterNumber\ #2}%
+	%
+	\TOCwrite{\TOCline}{0}{\currentChapterNumber}{#2}{\the\pageno}%
+	%
+	\pdfdest name {sn:\currentChapterNumber} xyz
+	\pdfoutline goto name {sn:\currentChapterNumber} count \GetOutlineCount{\currentChapterNumber} {\currentPartName}%
+	%
+	\vbox to0pt{}
+	\hbox{%
+		\vtop{%
+			\noindent\leftskip0pt plus 1fil\parfillskip0pt
+			\fChapterWord
+			\ifnum\nchapter<65
+				Chapter \currentChapterNumber
+			\else
+				Appendix \currentChapterNumber
+			\fi
+			\vskip3mm
+			%\hbox{\advance\hsize-10cm\\hbox to10cm{\hrulefill}}%
+			\line{\hskip9cm\hrulefill}%
+			\vskip3mm
+			\fchapter\baselineskip30pt #2
+		}%
+		\ifShowLabels
+			\rlap{\labelColor\quad#1\cBlack}%
+		\fi
+	}%
+	\vskip2cm
+	\mark{}%
+	\parindent = 0pt \everypar={\parindent=\ParIndent \everypar={}}%
+	%
+	\NewChaptertrue
+}
+
+% starts the part of appendices
+\def\appendices{%
+	\nchapter=64
+}
+
+\def\SpecialChapter#1{%
+	\vfil\eject\forceoddpage
+	\edef\currentChapterName{#1}\edef\currentPartName{}%
+	\TOCwrite{\TOCline}{0}{}{\currentChapterName}{\the\pageno}%
+	\pdfdest name {s:\currentChapterName} xyz
+	\pdfoutline goto name {s:\currentChapterName} count 0 {\currentChapterName}%
+	\hbox{%
+		\vtop{%
+			\noindent\leftskip0pt plus 1fil\parfillskip0pt
+			\fchapter\currentChapterName
+		}%
+	}%
+	\bigskip\bigskip
+	\mark{}%
+	\NewChaptertrue
+}
+
+\def\block#1{%
+	\ifx\OutlineLabel\empty
+		\def\Label{#1}%
+	\else
+		\edef\Label{\OutlineLabel}%
+		\xdef\OutlineLabel{}%
+	\fi
+	\vskip1\baselineskip
+	\pdfdest name {sb:\Label} xyz
+	{\bf #1}%
+	\pdfoutline goto name {sb:\Label} count 0 {\Label}%
+	\TOCwrite{\TOCblock}{}{\currentPartNumber}{\Label}{\the\pageno}%
+	\vskip0.5\baselineskip
+}
+
+\def\references{%
+	\SpecialChapter{References}
+}
+
+\def\sref#1{%
+	\pdfstartlink
+	attr{/Border [0 0 0]}%
+	goto name {s:#1}%
+	\linkColor%
+	\safecom{s:#1}%
+	\cBlack%
+	\pdfendlink
+}
+
+\def\Sref#1{%
+	\def\test{chapter}%
+	\ea\ifx\csname st:#1\endcsname\test
+		Ch.~\sref{#1}%
+	\else
+		Sec.~\sref{#1}%
+	\fi
+}
+
+\def\Sc#1{\ForAllComSepImp{#1}{\Sref}{}{}{, }{ and }}
+
+% default values
+\def\currentChapterName{} 
+\def\currentPartName{}
+\def\currentPartNumber{}
+
+% table of contents
+\ea\def\csname toc width 0\endcsname{4mm}
+\ea\def\csname toc width 1\endcsname{6mm}
+\ea\def\csname toc width 2\endcsname{10mm}
+\ea\def\csname toc width 3\endcsname{14mm}
+
+\ea\def\csname toc indent 0\endcsname{0mm}
+\ea\def\csname toc indent 1\endcsname{4mm}
+\ea\def\csname toc indent 2\endcsname{10mm}
+\ea\def\csname toc indent 3\endcsname{20mm}
+
+\def\GetOutlineCount#1{%
+	\expandafter\ifx\csname outcnt:#1\endcsname\relax
+		0
+	\else
+		\csname outcnt:#1\endcsname
+	\fi
+}
+
+\def\AdvanceOutlineCount#1{%
+	\iter=\GetOutlineCount{#1}%
+	\advance\iter1
+	\expandafter\xdef\csname outcnt:#1\endcsname{\the\iter}%
+}
+
+\def\ParentSep#1.#2;{%
+	\def\parentBit{#1}%
+	\def\parentBuf{#2}%
+}
+
+\def\ParentSepLoop{%
+	\ea\ParentSep\parentBuf;
+	\let\next=\ParentSepLoop
+	\ifx\parentBuf\empty
+		\let\next=\relax
+	\else
+		\ifx\parentPart\empty
+			\edef\parentPart{\parentBit}%
+		\else
+			\edef\parentPart{\parentPart.\parentBit}%
+		\fi
+	\fi
+	\next
+}
+
+\def\GetParentPart#1{%
+	\def\parentPart{}%
+	\def\parentBuf{#1.}%
+	\ParentSepLoop
+}
+
+\def\TOCline#1#2#3#4{%
+	\def\level{#1}%
+	\def\number{#2}%
+	\edef\Indent{\csname toc indent #1\endcsname}%
+	\edef\Width{\csname toc width #1\endcsname}%
+	\ifnum\level=0
+		\vskip3mm
+		\line{%
+			\hskip\Indent
+			\ifx\number\empty
+				\pdfstartlink
+				attr{/Border [0 0 0]}%
+				goto name {s:#3}%
+			\else
+				\pdfstartlink
+				attr{/Border [0 0 0]}%
+				goto name {sn:#2}%
+			\fi
+			\strut\fssubsection \hbox to\Width{#2\hfil}#3%
+			\hfil
+			%\hbox to6mm{\hss#4}%
+			\ #4%
+			\pdfendlink
+		}%
+	\else
+		\line{%
+			\hskip\Indent
+			\pdfstartlink
+			attr{/Border [0 0 0]}%
+			goto name {sn:#2}%
+			\strut \hbox to\Width{#2\hfil}#3%
+			\ \leaders\hbox{.\ }%
+			\hfil
+			%\hbox to6mm{\hss#4}%
+			\ #4%
+			\pdfendlink
+		}%
+		%
+		\GetParentPart{#2}%
+		\AdvanceOutlineCount{\parentPart}%
+	\fi
+}
+
+\def\TOCblock#1#2#3#4{%
+	\AdvanceOutlineCount{#2}%
+}
+
+
+\def\InsertToc{%
+	\vfil\eject\forceoddpage\vskip3cm%
+	\def\currentChapterName{Contents} \def\currentPartName{}%
+	\pdfdest name {TOC} xyz
+	\pdfoutline goto name {TOC} count 0 {\currentChapterName}%
+	\hbox{%
+		\vtop{%
+			\noindent\leftskip0pt plus 1fil\parfillskip0pt
+			\fchapter Contents
+		}%
+	}%
+	\bigskip\bigskip
+	\input\jobname.toc
+}
+
+% index
+\def\insertIDX{\input\jobname.idx}
+
+
+
+% ============================================== global commands =========================================
+
+\def\BeginText{%
+	\input\jobname.ref
+	\immediate\openout\TOC\jobname.toc
+	\immediate\openout\IDX\jobname.idx
+	\immediate\openout\REF\jobname.ref
+	\layoutpage
+	\pageno=1
+}
+
+\def\EndText{%
+	\vfil\eject
+	\immediate\closeout\TOC
+	\immediate\closeout\IDX
+	\immediate\closeout\REF
+}
+
+
+% ========================================= macro captions ===============================================
+
+\def\CaptionPrefix{\currentChapterNumber.}
+
+% =============================================== finesses ===============================================
+
+
+
+% ================================================ presets ===============================================
+
+\let\NormalFonts\SetFontSizesXII
+\let\SmallerFonts\SetFontSizesX
+
+\def\labelColor{\cGreen}
+\def\linkColor{\cBlue}
+
+\NormalFonts
+
+\plainpage
+\pageamp=0mm
+\newdimen\ParIndent	\ParIndent=0pt
+\Reftrue

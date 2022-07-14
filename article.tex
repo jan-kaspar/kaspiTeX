@@ -1,0 +1,120 @@
+\input base_text
+
+% ======================================== counters & dimensions =========================================
+\newcount\nsec		\nsec		= 0
+\newcount\nsubsec  	\nsubsec 	= 0
+\newcount\nssubsec	\nssubsec	= 0
+\newcount\napp		\napp		= 64
+
+
+% ============================================ page layout ===============================================
+\def\layoutpage{
+	\footline={\hfil \rm \the\pageno \hfil}
+	\def\makeheadline{}
+	}
+
+\def\plainpage{\footline={}\def\makeheadline{}}
+
+%\parindent 	= 0pt
+%\parskip	= \medskipamount
+
+
+% ============================================ fonts =====================================================
+\font\fPbxxv	= pplb8z at 25pt
+\font\fPbxx	 	= pplb8z at 20pt
+\font\fPbxvii 	= pplb8z at 17pt
+\font\fPbxiv 	= pplb8z at 14pt
+
+%\let\fch 		= \fPbxxv
+%\let\fsec	 	= \fPbxx
+%\let\fsubsec 	= \fPbxvii
+%\let\fssubsec	= \fPbxiv
+
+
+% ========================================== structure macros ============================================
+
+\newif\ifNumberSections
+
+\def\sref#1{\safecom{sec:#1}}
+
+\def\title#1{\penalty-\clubpenalty\vskip3\baselineskip{\baselineskip24pt\vbox{\noindent\fPbxx #1}}\penalty\clubpenalty\vskip\baselineskip}
+
+\def\section{\IfNch[{\sectionRef}{\sectionBase}}
+\def\sectionRef[#1]#2{\sectionBase{#2}\MakeRef{sec:#1}{\the\nsec}}
+\def\sectionBase#1{%
+	\advance\nsec1 \nsubsec=0  \nssubsec=0%
+	\penalty-\clubpenalty\vskip2\baselineskip{\baselineskip15pt\vbox{%
+		\noindent\SetFontSizesXII\bf\ifNumberSections\the\nsec. \fi #1%
+	}}\penalty\clubpenalty\vskip\baselineskip
+	\parindent = 0pt \everypar={\parindent=\ParIndent \everypar={}}%
+	}
+
+\def\subsection#1{%
+	\advance\nsubsec1  \nssubsec=0%
+	\penalty-\clubpenalty\vskip2\baselineskip{\baselineskip15pt\vbox{%
+		\noindent\bf\ifNumberSections\the\nsec.\the\nsubsec. \fi #1%
+	}}\penalty\clubpenalty\vskip\baselineskip
+	\parindent = 0pt \everypar={\parindent=\ParIndent \everypar={}}%
+}
+
+\def\ssubsection#1{%
+	\advance\nssubsec1%
+	\penalty-\clubpenalty\vskip2\baselineskip{\baselineskip15pt\vbox{%
+		\noindent\it\ifNumberSections\the\nsec.\the\nsubsec.\the\nssubsec. \fi #1%
+	}}\penalty\clubpenalty\vskip\baselineskip
+	\parindent = 0pt \everypar={\parindent=\ParIndent \everypar={}}%
+	}
+
+\def\appendix#1{%
+	\advance\napp1%
+	\penalty-\clubpenalty\vskip3\baselineskip{\baselineskip15pt\vbox{%
+		\noindent\fPbxiv Appendix\ifNumberSections{} \char\napp. \fi #1%
+	}}\penalty\clubpenalty\vskip\baselineskip%
+	% change equation numbering
+	\ifNumberSections%
+		\eqn=0%
+		\def\EqRef{(\char\the\napp.\the\eqn)}%
+		\def\EqCap{(\char\the\napp.\the\eqn)}%
+	\fi%
+	\parindent = 0pt \everypar={\parindent=\ParIndent \everypar={}}%
+	}
+
+\def\references{\penalty-\clubpenalty\vskip3\baselineskip{\baselineskip15pt\vbox{\noindent\bf References}}\penalty\clubpenalty\vskip\baselineskip}
+\def\acknowledgements{\penalty-\clubpenalty\vskip3\baselineskip{\baselineskip15pt\vbox{\noindent\bf Acknowledgements}}\penalty\clubpenalty\vskip\baselineskip}
+
+\def\header#1#2#3#4{
+	\centerline{\fPbxx #1}%
+	\vskip2\baselineskip
+	\centerline{#2}%
+	\vskip1\baselineskip
+	\centerline{#3}%
+	\vskip2\baselineskip
+	\centerline{\bf\strut Abstract}%
+	\line{\hskip1cm\vbox{\advance\hsize-2cm\noindent\SmallerFonts #4}}%
+}
+
+% =========================================== global commands ============================================
+
+
+
+% ========================================= macro captions ===============================================
+\def\TableCap{Table \the\tabn:}
+\def\TableRef{\the\tabn}
+\def\FigureCap{Figure \the\fign:}
+\def\FigureRef{\the\fign}
+\def\EqCap{(\the\eqn)}
+\def\EqRef{(\the\eqn)}
+
+
+% =============================================== finesses ===============================================
+
+
+% ================================================ presets ===============================================
+\layoutpage
+
+\let\NormalFonts\SetFontSizesX
+\let\SmallerFonts\SetFontSizesVIII
+
+\NormalFonts
+
+\newdimen\ParIndent	\ParIndent=1em

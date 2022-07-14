@@ -1,0 +1,34 @@
+\input base_presentation
+
+%----- interaction with Asymptote wrapper -----------------------------------------------------------
+
+\let\oldend\end
+
+\def\pagestyle#{}
+%\def\begin#1( #2, #3){\hbox to#2pt{\vbox to#3pt{\vss}\hss}}
+\def\begin#1{}
+\def\end#1{}
+
+\def\newpage{\vfil\eject}
+
+\def\bye{\oldend}
+
+\def\protected{}
+
+\footline={}
+
+% ================================================ bullets ===============================================
+
+\let\B=\>
+\let\BB=\>>
+\let\BBB=\>>>
+
+\catcode`\>=12
+
+% ================================================ presets ===============================================
+
+\let\BiggerFonts\SetFontSizesXII
+\let\NormalFonts\SetFontSizesX
+\let\SmallerFonts\SetFontSizesVIII
+
+\NormalFonts

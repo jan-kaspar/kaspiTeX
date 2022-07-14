@@ -1,0 +1,536 @@
+\input base
+
+%----------------------------------------------------------------------------------------------------
+
+\newif\ifToc
+\newif\ifIdx
+\newif\ifRef
+
+\newif\ifLocalEqnNumbering
+
+% whether to show labels of equations, figures, tables, etc.
+\newif\ifShowLabels
+
+%----- output files ---------------------------------------------------------------------------------
+
+\newwrite\TOC
+\newwrite\IDX
+\newwrite\REF
+
+\def\MakeRef#1#2{%
+	\makecom{#1}{#2}%
+	\ifRef
+		\immediate\write\REF{\string\makecom{#1}{#2}}%
+	\fi
+}
+
+%----- counters & dimensions ------------------------------------------------------------------------
+
+% equations, tables, figures...
+\newcount\eqn		\eqn		= 0
+\newcount\tabn		\tabn		= 0				% per chapter
+\newcount\gtabn		\gtabn		= 0				% globally
+\newcount\fign		\fign		= 0
+\newcount\bookn		\bookn		= 0
+\newcount\bibn		\bibn		= 0
+\newcount\reffirstn	\reffirstn	= 0
+\newcount\nftn		\nftn		= 0				% footnotes counting
+\newcount\abbn		\abbn		= 0				% abbreviations
+
+\newcount\iter									% generic iterator
+
+\newdimen\pageamp	\pageamp 	= 0in			% left-right page offset amplitude
+
+%----- page layout ----------------------------------------------------------------------------------
+
+% settings of csplain, fitted to A4 = 210 mm  x  297 mm
+% 159.2 mm + 1 in + 1 in = 210 mm
+% 239.2 mm + 1 in + 1 in + 7 mm = 297 mm
+
+\vsize=239.2mm
+\hsize=159.2mm
+\advance\voffset by 3.5mm	% to make upper and bottom margin equally high
+
+\def\forceoddpage{\ifodd\pageno\else{\def\makeheadline{}\vbox to0pt{}\vfil\eject}\fi}
+
+%----- output routine -------------------------------------------------------------------------------
+
+\def\Output{\ifodd\pageno\hoffset=\pageamp\else\hoffset=-\pageamp\fi\plainoutput}
+\output={\Output}
+
+%----- global commands ------------------------------------------------------------------------------
+
+\def\BeginText{%
+	\ifRef
+		\input\jobname.ref
+		\immediate\openout\REF\jobname.ref%
+	\fi
+	\pageno=1
+}
+
+\def\EndText{%
+	\ifRef
+		\immediate\closeout\REF
+	\fi
+}
+
+%----- captions -------------------------------------------------------------------------------------
+
+\def\CaptionPrefix{}
+
+\def\TableCap{{\bf Table \CaptionPrefix\the\tabn}:}
+\def\TableRef{\CaptionPrefix\the\tabn}
+\def\FigureCap{{\bf Figure \CaptionPrefix\the\fign}:}
+\def\FigureRef{\CaptionPrefix\the\fign}
+\def\EqCap{(\CaptionPrefix\the\eqn)}
+\def\EqRef{\CaptionPrefix\the\eqn}
+
+\def\Eq#1{\ForAllComSepImp{#1}{\ref}{Eq\hbox{.}~}{Eqs\hbox{.}~}{, }{ and }}
+\def\Er#1{\ForAllComSepImp{#1}{\ref}{}{}{, }{ and }}
+\def\Fg#1{\ForAllComSepImp{#1}{\fref}{Fig\hbox{.}~}{Figs\hbox{.}~}{, }{ and }}
+\def\Tb#1{\ForAllComSepImp{#1}{\tref}{Tab\hbox{.}~}{Tabs\hbox{.}~}{, }{ and }}
+
+%----- tables ---------------------------------------------------------------------------------------
+
+
+\def\MakeTableCaption{\IfNch[{\MakeTCS}{\MakeTC}}
+	
+\def\MakeTC#1\endTableCaption#2{%
+	\vbox{%
+		\CompileTableCaption{#1}{#2}%
+	}%
+}
+
+\def\MakeTCS[#1]#2\endTableCaption#3{%
+	\def\temp{#1}%
+	\vbox{%
+		\ifx\temp\empty
+			\hsize\wd0
+		\else
+			\hsize\temp
+		\fi
+		\CompileTableCaption{#2}{#3}%
+	}%
+}%
+
+\def\CompileTableCaption#1#2{%
+	\noindent
+	\ifShowLabels
+		\vbox to 0pt{\vss\rlap{\labelColor#2\cFg}\hbox{\strut}}%
+	\fi
+	\strut\TableCap{} % space on purpose
+	#1
+}
+
+% normal (vertical) table - header cells are above columns
+\def\VerticalTableTemplate{%
+	\bstrut\bvrule\hfil\tskip $##$\tskip\hfil&&
+	\vrule\hfil\tskip $##$\tskip\hfil\cr
+}
+
+% horizontal table - header cells are left of rows
+\def\HorizontalTableTemplate{%
+	\bstrut\bvrule\hfil\tskip $##$\tskip\hfil&
+	\bstrut\bvrule\hfil\tskip $##$\tskip\hfil&&
+	\vrule\hfil\tskip $##$\tskip\hfil\cr
+}
+
+% makes a table reference label
+\def\tlab#1{%
+	\MakeRef{tab:#1}{\TableRef}
+	\pdfdest name {tab:#1} xyz
+	\ifx\pdfoutput\undefined
+		\special{src:tab:"#1"}%
+	\fi
+}
+
+% makes a table
+% #1 = reference label, #2 = caption, #3 = template, #4 = table data
+% #5: if non-empty, the rhs line will be drawn
+\def\MakeTable#1#2#3#4#5{%
+	\bgroup
+		\def\P{#5}
+		\ifx\P\empty
+			\setbox0=\hbox{\vbox{\offinterlineskip\halign{\span#3#4}}}%
+		\else
+			\setbox0=\hbox{\vbox{\offinterlineskip\halign{\span#3#4}}\bvrule}%
+		\fi
+		\global\advance\tabn1
+		\global\advance\gtabn1
+		\makecom{gtabnum:\the\gtabn}{\the\nchapter.\the\tabn}%
+		\makecom{gtabpage:\the\gtabn}{\the\pageno}%
+		\makecomNonEx{gtabdesc:\the\gtabn}{#2}%
+		\vtop{%
+			\tlab{#1}%
+			\pdfdest name {gtab:\the\gtabn} xyz
+			\hbox{\hss\copy0\hss}%
+			\hbox to\wd0{%
+				\hss
+				%\SmallerFonts
+				\MakeTableCaption#2\endTableCaption{#1}\hss
+			}%
+		}%
+		\hss
+	\egroup
+}
+
+% row-centered layout
+\def\mcitm#1{\hbox to0pt{\hss#1\hss}\hfil}                   					% an element of centering
+\def\bmcent{\removelastskip\vskip4mm\noindent\line\bgroup\hss}   				% beginning of centering
+\def\emcent{\hskip0pt minus1fil \egroup\vskip4mm}								% end of centering
+
+% horizontal table
+\def\htab#1#2#3{\bmcent\MakeTable{#1}{#2}{\HorizontalTableTemplate}{#3}{Y}\emcent}
+
+% vertical table
+\def\tabAuto#1#2#3{\bmcent\MakeTable{#1}{#2}{\VerticalTableTemplate}{#3}{Y}\emcent}
+
+% table with manual template
+\def\tabMan[#1]#2#3#4{\bmcent\MakeTable{#2}{#3}{#1}{#4}{}\emcent}
+
+\def\tab{\IfNch[{\tabMan}{\tabAuto}}
+
+\def\inline#1#2{\omit #1\hfil\ \vbox to0pt{\vss\hbox{#2}\vss}\ \hfil}			% policko nulove vysky, bez pouziti zahlavi
+
+% makes a table reference
+\def\tref#1{%
+	\pdfstartlink goto name {tab:#1}%
+	\linkColor%
+	\safecom{tab:#1}%
+	\cFg%
+	\pdfendlink
+}
+
+% vertical joining of cells
+\def\mc#1{\hfil\vbox to0pt{\vss\hbox{$#1$}\vss}\hfil}
+
+% printing the list of tables
+\def\PrintListOfTables{%
+	\iter=0
+	\loop\ifnum\iter<\gtabn
+		\advance\iter1
+		\PrintLOTLine{\the\iter}%
+	\repeat
+}
+
+\def\PrintLOTLine#1{%
+	\vskip2mm
+	\indent
+	\pdfstartlink goto name {gtab:#1}%
+	\em{Table \safecom{gtabnum:#1} on page \safecom{gtabpage:#1}}: \safecom{gtabdesc:#1}%
+	\pdfendlink
+}
+
+%----- figures --------------------------------------------------------------------------------------
+
+\def\SingleFigTit#1#2{%
+	\bgroup
+	%\SmallerFonts
+	\ifx\bmfigCap\empty	% if bmfigCap is empty make full caption Figure n+1: ...
+		\ifShowLabels
+			\vbox to 0pt{\vss\rlap{\labelColor#2\cFg}\hbox{\strut}}%
+		\fi	
+		\FigureCap{} %
+		#1%
+	\else
+		#1
+	\fi
+	\egroup
+}
+
+\def\InsertFiguerTitleNW#1\endFigureTitle#2{%
+	\hbox to\wd0{%
+		\hss
+		\vbox{%
+			\leftskip0pt
+			\rightskip0pt
+			\parfillskip0pt plus 1fil
+			\noindent\SingleFigTit{#1}{#2}%
+		}%
+		\hss
+	}%
+}
+
+\def\InsertFigureTitle[#1]#2\endFigureTitle#3{%
+	\def\temp{#1}%
+	\hbox to\wd0{%
+		\hss\vbox{%
+			\ifx\temp\empty
+				\hsize\wd0
+			\else
+				\hsize\temp
+			\fi
+			\leftskip0pt
+			\rightskip0pt
+			\parfillskip0pt plus 1fil
+			\noindent\SingleFigTit{#2}{#3}%
+		}\hss
+	}%
+}
+
+\def\fiigSbase#1#2#3#4#5{
+	\SmallerFonts%
+	\setbox1=\hbox{%
+		\vbox to0pt{\vss\RotCCW{#3}\vss}%
+		\vbox to0pt{\vss\copy0\vss}%
+		\vbox to0pt{\vss\RotCCW{#5}\vss}%
+		}%
+	\setbox0=\vbox to\ht0{\vss\copy1\vss}%
+	\vtop{%
+		\hbox to\wd0{\hss #4\hss}%
+		\copy0%
+		\def\temp{#2}%
+		\ifx\temp\empty
+		\else	% insert title only if not emtpy, empty title produces a one-line vspace
+			\IfNch[{\InsertFigureTitle}{\InsertFiguerTitleNW}#2\endFigureTitle{#1}
+		\fi
+		}%
+	%\ifx\bmfigCap\empty
+	%	\flab{#1}% make label
+	%\fi
+}
+
+
+% special (*), no width
+\def\fiigSNW*#1#2#3#4#5#6{%
+	\hfil
+	\bgroup%
+		\setbox0=\hbox{\IncludeGraphics{#1}}%
+		\fiigSbase{#2}{#3}{#4}{#5}{#6}%	
+	\egroup
+}
+	
+% special (*), width
+\def\fiigSW*[#1]#2#3#4#5#6#7{%
+	\hfil
+	\bgroup
+		\setbox0=\hbox{\IncludeSizedGraphics{#1}{#2}}%
+		\fiigSbase{#3}{#4}{#5}{#6}{#7}%
+	\egroup
+}
+	
+% not special (*), no width
+\def\fiigNW#1#2#3{%
+	\hfil
+	\setbox0=\hbox{\IncludeGraphics{#1}}%
+	\vtop{%
+		\global\advance\fign1%
+		\flab{#2}%
+		\copy0%
+		\IfNch[{\InsertFigureTitle}{\InsertFiguerTitleNW}#3\endFigureTitle{#2}
+	}%
+}
+
+% not special (*), width
+\def\fiigW[#1]#2#3#4{%
+	\hfil
+	\setbox0=\hbox{\IncludeSizedGraphics{#1}{#2}}%
+	\vtop{%
+		\global\advance\fign1%
+		\flab{#3}%
+		\copy0%
+		\IfNch[{\InsertFigureTitle}{\InsertFiguerTitleNW}#4\endFigureTitle{#3}
+	}%
+}
+
+	
+\def\fiigS*{\IfNch[{\fiigSW}{\fiigSNW}}	
+\def\fiigNS{\IfNch[{\fiigW}{\fiigNW}}	
+\def\fiig{\IfNch*{\fiigSW}{\fiigNS}}	
+
+\def\figSNW#1#2#3#4#5#6{\bmfig\fiigSNW*{#1}{#2}{#3}{#4}{#5}{#6}\emfig}
+\def\figSW[#1]#2#3#4#5#6#7{\bmfig\fiigSW*[#1]{#2}{#3}{#4}{#5}{#6}{#7}\emfig}
+\def\figNW#1#2#3{\bmfig\fiigNW{#1}{#2}{#3}\emfig}
+\def\figW[#1]#2#3#4{\bmfig\fiigW[#1]{#2}{#3}{#4}\emfig}
+
+\def\figS*{\IfNch[{\figSW}{\figSNW}}	
+\def\figNS{\IfNch[{\figW}{\figNW}}	
+\def\fig{\IfNch*{\figS}{\figNS}}	
+
+
+% labeling
+\def\flab#1{%
+	\def\temp{#1}%
+	\ifx\temp\empty
+	\else
+		\ifx\pdfoutput\undefined
+			\special{src:fig "#1"}
+		\else
+			\pdfdest name {fig:#1} xyz
+		\fi
+		\MakeRef{fig:#1}{\FigureRef}%
+	\fi
+}
+
+% references
+\def\fref#1{%
+	\pdfstartlink goto name {fig:#1}%
+	\linkColor%
+	\safecom{fig:#1}%
+	\cFg%
+	\pdfendlink
+}
+
+% several figures in a row
+\def\bmfigCap{}		% caption of bmfig
+\def\bmfig{\IfNch[{\bmfigS}{\bmfigNS}}
+\def\bmfigNS{\bmfigS[]}
+\def\bmfigS[#1]{%
+	\bgroup\let\fig\fiig%
+	\removelastskip\vskip4mm%
+	\def\bmfigCap{#1}% inside group, important!, outside the bmfigCap must be empty to make captions for single figures
+	\vbox\bgroup%
+		\leftskip0pt plus1fil
+		\rightskip0pt plus1fil
+		\parfillskip0pt
+		\noindent\hskip0pt plus-1fil
+}
+				
+\def\emfig{%
+	\egroup
+	\leftskip0pt
+	\ifx\bmfigCap\empty\else%
+		\global\advance\fign1%
+		\centerline{\SmallerFonts\vbox{\advance\hsize-1cm \noindent \FigureCap{} \bmfigCap}}%
+	\fi%
+	\egroup% group with SmallerFonts etc.
+	\vskip4mm
+}
+
+%----- equations ------------------------------------------------------------------------------------
+
+\def\eq#1{%
+	\ifLocalEqnNumbering
+		\advance\eqn1
+	\else
+		\global\advance\eqn1
+	\fi
+	$$#1\eqno{\hbox{\EqCap}}$$%
+}
+
+\def\eqref#1#2{%
+	\ifx\pdfoutput\undefined\special{src:eq:"#2"}\fi
+	\ifLocalEqnNumbering
+		\advance\eqn1
+	\else
+		\global\advance\eqn1
+	\fi
+	\MakeRef{eq:#2}{\EqRef}%
+	\pdfdest name {eq:#2} xyz
+	\ifShowLabels
+		$$#1\eqno{\hbox{\EqCap}\rlap{\ \labelColor#2\cFg}}$$%
+	\else
+		$$#1\eqno{\hbox{\EqCap}}$$%
+	\fi
+	%
+}
+
+\def\eqnoref{\IfNch[{\eqnorefMan}{\eqnorefStd}}
+\def\eqnorefStd#1{%
+	\global\advance\eqn1
+	\MakeRef{eq:#1}{\EqRef}%
+	\eqno{\hbox{\EqCap}}%
+}
+\def\eqnorefMan[#1]#2{%
+	\MakeRef{eq:#2}{#1}%
+	\eqno{\hbox{\rm #1}}%
+}
+
+\def\ref#1{%
+	\pdfstartlink goto name {eq:#1}%
+	\linkColor%
+	\safecom{eq:#1}%
+	\cFg%
+	\pdfendlink
+}
+
+%----- abbreviation management ----------------------------------------------------------------------
+
+\def\MakeAbbRef#1{%
+	\ea\ifx\csname abbref:#1\endcsname\relax%
+		\global\advance\abbn1%
+		\makecom{abbref:#1}{\the\abbn}%
+		\makecom{abbrefnum:\the\abbn}{#1}%
+	\fi
+}
+
+\def\abb#1{%
+	\leavevmode
+	\MakeAbbRef{#1}%
+	%\pdfstartlink goto name {abb:\csname abbref:#1\endcsname}%
+	\pdfstartlink goto name {abb:#1}%
+	\linkColor#1\cFg%
+	\pdfendlink
+}
+
+\def\PrintAbbreviations{%
+	\iter=0
+	\loop\ifnum\iter<\abbn
+		\advance\iter1
+		\PrintAbbreviation{\the\iter}
+	\repeat
+}
+
+\def\PrintAbbreviation#1{%
+	\vskip2mm
+	\pdfdest name {abb:#1} xyz
+	\noindent
+	\hbox to25mm{%
+		\bf
+		\safecom{abbrefnum:#1}%
+		\hfil
+	}%
+	\vtop{%
+		\advance\hsize-25mm
+		\noindent
+		\safecom{abbdef:#1}%
+	}%
+}
+
+\def\DefAbb#1#2#3{%
+	\MakeAbbRef{#1}%
+	\def\temp{#3}%
+	\ifx\temp\empty
+		\edef\temp{{\it#2}}%	
+	\else
+		\edef\temp{{\it#2}. #3}%	
+	\fi
+	\makecom{abbdef:\csname abbref:#1\endcsname}{\temp}%
+}
+
+\def\ListAbb#1#2#3{%
+	\vskip2mm
+	\pdfdest name {abb:#1} xyz
+	\noindent
+	\hbox to16mm{%
+		\bf
+		#1
+		\hfil
+	}%
+	\def\short{#2}%
+	\def\long{#3}%
+	\vtop{%
+		\advance\hsize-16mm
+		\noindent
+		\ifx\short\empty
+			#3%
+		\else
+			\ifx\long\empty
+				{\it#2}%
+			\else
+				{\it#2}. #3%
+			\fi
+		\fi
+	}%
+}
+
+%----- footnotes ------------------------------------------------------------------------------------
+
+\let\oldfootnote\footnote
+\def\footnote#1{%
+	\bgroup
+		\global\advance\nftn1
+		\SmallerFonts
+		\oldfootnote{$^{\,\the\nftn)}$}{#1}%
+	\egroup
+}

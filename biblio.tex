@@ -1,0 +1,121 @@
+% ================================== processing of comma separated list =================================
+
+\def\GetFirstComSep#1,#2;{%
+	\def\CSvalue{#1}%
+	\def\CSbuffer{#2}%
+	}
+
+\def\ForAllComSep#1#2{%
+	\def\CSaction{#2}%
+	\def\CSbuffer{#1,}%
+	\ForAllComSepLoop
+	}
+
+\def\ForAllComSepLoop{%
+	\ifx\CSbuffer\empty
+		\let\next\relax  
+	\else  
+		\let\next\ForAllComSepLoop
+		\ea\GetFirstComSep\CSbuffer;%
+		\CSaction{\CSvalue}%
+	\fi
+	\next
+}
+
+
+% ===================================== bibliography user interface =====================================
+
+% Use \bref{bla,neco,jineho} to refer to bla, neco and jineho
+\def\bref#1{{\rm[\ForAllComSep{#1}{\abref}]}}
+
+\def\abref#1{%
+	\AddBibRef{#1}%
+	\pdfstartlink%
+		attr{/Border [0 0 0]}%
+		goto name {bibref:#1}%
+		\cmyk{\linkColor}%
+		\csname bibref:#1\endcsname
+		\cmyk{\cmykBlack}%
+	\pdfendlink
+	\ifx\CSbuffer\empty
+	\else,\ 
+	\fi
+}
+
+\def\AddBibRef#1{%
+	\ea\ifx\csname bibref:#1\endcsname\relax%
+		\global\advance\bibn1%
+		\makecom{bibref:#1}{\the\bibn}%
+		\makecom{bibrefnum:\the\bibn}{#1}%
+	\fi
+}
+
+% dumps all trailing references (print references with numbers from actual bibn to bookn)
+\def\PrintReferences{%
+	\bookn=\reffirstn
+	\loop\ifnum\bibn>\bookn
+		\advance\bookn1
+		\MakeBibLine
+	\repeat
+	\global\reffirstn=\bookn
+}
+
+% formats output for one line in reference list
+\def\MakeBibLine{%
+	\edef\reference{\com{bibrefnum:\the\bookn}}%
+	\pdfdest name {bibref:\reference} xyz
+	\hbox to\hsize{%
+		\hbox to10mm{\strut[\the\bookn]\hfil}%
+		\vtop{%
+			\advance\hsize-1cm\noindent
+			\bstrut
+			\com{bib:\reference}%
+			\strut
+		}%
+		\ifShowLabels
+			\rlap{\hskip1mm\cmyk{\labelColor}\reference\cmyk{\cmykBlack}\hss}%
+		\fi
+	}%
+}
+
+\def\Field#1{\frenchspacing#1}
+
+\def\MissingField#1{{\cmyk{\cmykRed}?#1?\cmyk{\cmykBlack}}}
+
+
+\def\UrlGetFirst#1/#2;{%
+	\def\UrlFirst{#1}%
+	\def\UrlBuf{#2}%
+}
+
+\def\PrintUrl#1{%
+	\def\UrlBuf{#1/}%
+	\PrintUrlLoop
+}
+
+\def\PrintUrlLoop{%
+	\expandafter\UrlGetFirst\UrlBuf;%
+	\UrlFirst
+	\ifx\UrlBuf\empty
+	\else
+		/\discretionary{}{}{}%
+		\PrintUrlLoop
+	\fi
+}
+
+\def\url#1{$<$\nobreak\PrintUrl{#1}\nobreak$>$}
+%\def\url#1{$<$\nobreak#1\nobreak$>$}
+
+\def\={\discretionary{}{}{}}
+
+% ================================ bibliography macros for input file ================================
+
+\def\AddRefInfo#1{\ea\MakeRefInfo#1}
+
+\def\MakeRefInfo#1="#2"{\makecom{bib:#1:\A}{#2}}
+\def\article#1#2{%
+	\bgroup
+	\def\A{#1}
+	\ForAllComSep{#2}{\AddRefInfo}
+	\egroup
+}
