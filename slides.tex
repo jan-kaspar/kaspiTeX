@@ -70,7 +70,7 @@
 		\hbox to\hsize{%
 			\hskip-\horizontalmargin
 			\vbox to0pt{\advance\hsize2\horizontalmargin
-				\cBlue
+				\cEdhouseGreen
 				\hrule height4mm width\hsize
 				\vss
 			}%
@@ -124,7 +124,8 @@
 	\hbox to\hsize{%
 		\hskip-\horizontalmargin
 		\vbox{\advance\hsize2\horizontalmargin
-			\cBlue
+			\advance\hsize-5cm
+			\cEdhouseGreen
 			\hrule height8mm width\hsize
 			\vbox to0pt{%
 				\vss
@@ -144,27 +145,6 @@
 }
 
 \def\ctitle#1#2{\title{{\rm #1} : {\it #2}}}
-
-\def\Title#1{%
-	\hbox to\hsize{%
-		%\hskip-\horizontalmargin
-		\vbox{%
-			\cBlue
-			\hrule height13mm width\hsize
-			\vbox to0pt{%
-				\vss
-				\vbox to13mm{%
-					\vss
-					\cWhite
-					\vbox{\leftskip10pt plus1fil\rightskip10pt plus1fil\parfillskip0pt #1}%
-					\vss
-				}%
-			}%
-			\cFg
-		}%
-	\hss
-	}%
-}
 
 \def\section#1{\noindent\cRe{\bf #1}\cFg}
 
@@ -233,6 +213,33 @@
 	\cFg
 }
 
+\def\SetEdhouseTitleBackground{\SetBackground{fig/edhouse/presentation_bckg_title.png}}
+\def\SetEdhouseBackground{\SetBackground{fig/edhouse/presentation_bckg_standard.png}}
+\def\SetEdhouseLastBackground{\SetBackground{fig/edhouse/presentation_bckg_last.png}}
+
+\def\cEdhouseGreen{\cmyk{0.32 0 0.81 0.24}}
+\def\cEdhouseGray{\cmyk{0 0.04 0.04 0.49}}
+
+\let\cFirst = \cBlue
+\let\cSecond = \cBlack
+\let\cThird = \cDGrayRed
+\let\cExtra = \cDarkCyan
+
+\def\EdhouseTitlePage#1#2#3#4#5{%
+	\SetEdhouseTitleBackground
+	\hbox{}
+	\vfill
+	\hbox to\hsize{\SetFontSizesXXV\cEdhouseGray\bf\hskip2cm #1\hfil}
+	\vskip3mm
+	\hbox to\hsize{\SetFontSizesXX\cEdhouseGray\bf\hskip2cm #2\hfil}
+	\vfill
+	\SetFontSizesXVI
+	\hbox to\hsize{\cWhite\hfil #3\hskip2cm}
+	\hbox to\hsize{\cWhite\hfil #4\hskip2cm}
+	\hbox to\hsize{\cWhite\hfil #5\hskip2cm}
+	\footline={}
+}
+
 %----- details --------------------------------------------------------------------------------------
 
 \def\centerline#1{\hbox to\hsize{\hss#1\hss}}
@@ -247,13 +254,13 @@
 \let\NormalFonts\SetFontSizesXII
 \let\SmallerFonts\SetFontSizesX
 
-\EmptyBackground
+\SetEdhouseBackground
 \NormalSettings
 \NormalFonts
 
-\def\itcol{\cBl}
-\def\iitcol{\cBlack}
-\def\iiitcol{\cDGrayRed}
+\def\itcol{\cFirst}
+\def\iitcol{\cSecond}
+\def\iiitcol{\cThird}
 
 \def\em#1{\cGreen{\it #1}\previcol}
 \def\Em#1{\cRed{#1}\previcol}
