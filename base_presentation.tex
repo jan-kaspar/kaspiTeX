@@ -120,6 +120,18 @@
 \def\tab{\IfNch*{\tabB}{\TabBase}}
 \def\htab{\IfNch*{\htabB}{\HTabBase}}
 
+\def\mrtemplate{\hfil\tskip ##\tskip\hfil&    
+                \hfil\tskip ##\tskip\hfil&&
+                \hfil\tskip ##\tskip\hfil\cr}
+
+\def\rtab#1{%
+	\bgroup
+		\hbox{%
+			\vbox{\offinterlineskip\halign{\span\mrtemplate#1}}%
+		}%
+	\egroup
+}
+
 %----- references -----------------------------------------------------------------------------------
 
 \def\plab#1{%
